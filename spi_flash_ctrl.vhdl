@@ -115,7 +115,7 @@ begin
     wb_map_valid <= wb_valid and wb_sel_map;
 
     -- Register decode. For map accesses, make it look like "data"
-    wb_reg       <= wb_in.adr(SPI_REG_BITS-1 downto 0) when wb_reg_valid else SPI_REG_DATA;
+    wb_reg       <= wb_in.adr(SPI_REG_BITS+1 downto 2) when wb_reg_valid else SPI_REG_DATA;
 
     -- Big mode mux for SPI control
     mode_mux: process(all)
@@ -156,7 +156,7 @@ begin
             -- Data accesses, either manual or auto mode
             if ctrl_cs = '1' then
                 wb_out.ack <= d_ack when cmd_valid = '1' else wb_valid;
-                wb_out.dat <=  (7 downto 0 => d_rx, others => '0');
+                wb_out.dat <= x"00" & d_rx & d_rx & d_rx;
             else
                 wb_out.ack <= auto_ack;
                 wb_out.dat <= auto_data;
@@ -210,7 +210,7 @@ begin
         -- Convert wishbone address into a flash address
         -- For now assume 3-bytes addresses. We can add
         -- larger flash support later.
-        auto_addr := wb_in.adr(21 downto 0) & "00";
+        auto_addr := wb_in.adr(23 downto 2) & "00";
 
         -- Reset        
         if rst = '1' or ctrl_reset = '1' then

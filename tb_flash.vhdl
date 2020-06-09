@@ -115,7 +115,7 @@ begin
             wb_out.cyc <= '1';
             wb_out.stb <= '1';
             wb_out.we  <= '0';
-            wb_out.adr <= x"00" & adr(23 downto 2);
+            wb_out.adr <= "000000" & adr(23 downto 0);
             wb_sel_map <= '1';
             loop
             wait until rising_edge(clk);
@@ -152,7 +152,7 @@ begin
         procedure wb_reg_write(adr: in std_ulogic_vector(7 downto 0);
                                dat: in std_ulogic_vector(7 downto 0)) is
         begin
-            wb_out.adr(5 downto 0) <= adr(7 downto 2);
+            wb_out.adr(7 downto 0) <= adr;
             wb_out.sel <= encode_sel(adr(1 downto 0));
             wb_out.dat <= x"000000" & dat;
             wb_out.we  <= '1';
@@ -162,7 +162,7 @@ begin
         procedure wb_reg_read(adr: in  std_ulogic_vector(7 downto 0);
                               dat: out std_ulogic_vector(7 downto 0)) is
         begin
-            wb_out.adr(5 downto 0) <= adr(7 downto 2);
+            wb_out.adr(7 downto 0) <= adr;
             wb_out.sel <= encode_sel(adr(1 downto 0));
             wb_out.we  <= '0';
             wb_reg_cycle;
@@ -302,7 +302,7 @@ begin
 
         -- Wait for status 
         report "Waiting on RDSR...";
-       loop
+        loop
             cs_set;
             cmd_write(x"05");
             dat_read(dat);
@@ -377,6 +377,10 @@ begin
         -- Dummy
         dat_write(x"00");
         -- Data
+        -- Random delay
+        for i in 0 to 15 loop
+           wait until rising_edge(clk);
+        end loop;
         dat2_read(dat);
         report "DATA0=" & to_hstring(dat);
         assert dat = x"aa" report "Unexpected result" severity failure;
