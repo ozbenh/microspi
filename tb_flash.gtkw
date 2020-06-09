@@ -1,0 +1,110 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Tue Jun  9 03:29:56 2020
+[*]
+[dumpfile] "/home/ANT.AMAZON.COM/benh/hackplace/microspi/foo.ghw"
+[dumpfile_mtime] "Tue Jun  9 03:23:49 2020"
+[dumpfile_size] 11321268
+[savefile] "/home/ANT.AMAZON.COM/benh/hackplace/microspi/flash.gtkw"
+[timestart] 5042983700000
+[size] 3789 2091
+[pos] -1 -1
+*-24.868788 5043195000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_flash.
+[treeopen] top.tb_flash.spi.
+[treeopen] top.tb_flash.wb_in.
+[treeopen] top.tb_flash.wb_out.
+[sst_width] 301
+[signals_width] 435
+[sst_expanded] 1
+[sst_vpaned_height] 665
+@28
+top.tb_flash.spi.rst
+top.tb_flash.spi.clk
+@200
+-
+-SPI
+@28
+top.tb_flash.spi.sck
+@800028
+#{top.tb_flash.spi.sdat_i[3:0]} top.tb_flash.spi.sdat_i[3] top.tb_flash.spi.sdat_i[2] top.tb_flash.spi.sdat_i[1] top.tb_flash.spi.sdat_i[0]
+@28
+top.tb_flash.spi.sdat_i[3]
+top.tb_flash.spi.sdat_i[2]
+top.tb_flash.spi.sdat_i[1]
+top.tb_flash.spi.sdat_i[0]
+@1001200
+-group_end
+@28
+top.tb_flash.spi.sdat_o[0]
+top.tb_flash.spi.sdat_oe[0]
+top.tb_flash.cs_n
+@200
+-
+-spi_txrx
+@28
+top.tb_flash.spi.spi_rxtx.sck_up
+top.tb_flash.spi.spi_rxtx.sck_down
+#{top.tb_flash.spi.spi_rxtx.bit_count[2:0]} top.tb_flash.spi.spi_rxtx.bit_count[2] top.tb_flash.spi.spi_rxtx.bit_count[1] top.tb_flash.spi.spi_rxtx.bit_count[0]
+@420
+top.tb_flash.spi.spi_rxtx.state
+@28
+top.tb_flash.spi.spi_rxtx.start_cmd
+top.tb_flash.spi.spi_rxtx.cmd_valid
+top.tb_flash.spi.spi_rxtx.cmd_ack
+top.tb_flash.spi.spi_rxtx.d_ack
+@22
+#{top.tb_flash.spi.spi_rxtx.d_rx[7:0]} top.tb_flash.spi.spi_rxtx.d_rx[7] top.tb_flash.spi.spi_rxtx.d_rx[6] top.tb_flash.spi.spi_rxtx.d_rx[5] top.tb_flash.spi.spi_rxtx.d_rx[4] top.tb_flash.spi.spi_rxtx.d_rx[3] top.tb_flash.spi.spi_rxtx.d_rx[2] top.tb_flash.spi.spi_rxtx.d_rx[1] top.tb_flash.spi.spi_rxtx.d_rx[0]
+#{top.tb_flash.spi.spi_rxtx.d_tx[7:0]} top.tb_flash.spi.spi_rxtx.d_tx[7] top.tb_flash.spi.spi_rxtx.d_tx[6] top.tb_flash.spi.spi_rxtx.d_tx[5] top.tb_flash.spi.spi_rxtx.d_tx[4] top.tb_flash.spi.spi_rxtx.d_tx[3] top.tb_flash.spi.spi_rxtx.d_tx[2] top.tb_flash.spi.spi_rxtx.d_tx[1] top.tb_flash.spi.spi_rxtx.d_tx[0]
+#{top.tb_flash.spi.spi_rxtx.ireg[7:0]} top.tb_flash.spi.spi_rxtx.ireg[7] top.tb_flash.spi.spi_rxtx.ireg[6] top.tb_flash.spi.spi_rxtx.ireg[5] top.tb_flash.spi.spi_rxtx.ireg[4] top.tb_flash.spi.spi_rxtx.ireg[3] top.tb_flash.spi.spi_rxtx.ireg[2] top.tb_flash.spi.spi_rxtx.ireg[1] top.tb_flash.spi.spi_rxtx.ireg[0]
+#{top.tb_flash.spi.spi_rxtx.oreg[7:0]} top.tb_flash.spi.spi_rxtx.oreg[7] top.tb_flash.spi.spi_rxtx.oreg[6] top.tb_flash.spi.spi_rxtx.oreg[5] top.tb_flash.spi.spi_rxtx.oreg[4] top.tb_flash.spi.spi_rxtx.oreg[3] top.tb_flash.spi.spi_rxtx.oreg[2] top.tb_flash.spi.spi_rxtx.oreg[1] top.tb_flash.spi.spi_rxtx.oreg[0]
+@200
+-
+-flash_ctrl
+@420
+top.tb_flash.spi.auto_state
+@28
+top.tb_flash.spi.auto_ack
+@420
+top.tb_flash.spi.auto_cnt
+@28
+top.tb_flash.spi.auto_cmd_valid
+top.tb_flash.spi.auto_cs
+@22
+#{top.tb_flash.spi.auto_data[31:0]} top.tb_flash.spi.auto_data[31] top.tb_flash.spi.auto_data[30] top.tb_flash.spi.auto_data[29] top.tb_flash.spi.auto_data[28] top.tb_flash.spi.auto_data[27] top.tb_flash.spi.auto_data[26] top.tb_flash.spi.auto_data[25] top.tb_flash.spi.auto_data[24] top.tb_flash.spi.auto_data[23] top.tb_flash.spi.auto_data[22] top.tb_flash.spi.auto_data[21] top.tb_flash.spi.auto_data[20] top.tb_flash.spi.auto_data[19] top.tb_flash.spi.auto_data[18] top.tb_flash.spi.auto_data[17] top.tb_flash.spi.auto_data[16] top.tb_flash.spi.auto_data[15] top.tb_flash.spi.auto_data[14] top.tb_flash.spi.auto_data[13] top.tb_flash.spi.auto_data[12] top.tb_flash.spi.auto_data[11] top.tb_flash.spi.auto_data[10] top.tb_flash.spi.auto_data[9] top.tb_flash.spi.auto_data[8] top.tb_flash.spi.auto_data[7] top.tb_flash.spi.auto_data[6] top.tb_flash.spi.auto_data[5] top.tb_flash.spi.auto_data[4] top.tb_flash.spi.auto_data[3] top.tb_flash.spi.auto_data[2] top.tb_flash.spi.auto_data[1] top.tb_flash.spi.auto_data[0]
+#{top.tb_flash.spi.auto_d_txd[7:0]} top.tb_flash.spi.auto_d_txd[7] top.tb_flash.spi.auto_d_txd[6] top.tb_flash.spi.auto_d_txd[5] top.tb_flash.spi.auto_d_txd[4] top.tb_flash.spi.auto_d_txd[3] top.tb_flash.spi.auto_d_txd[2] top.tb_flash.spi.auto_d_txd[1] top.tb_flash.spi.auto_d_txd[0]
+@28
+top.tb_flash.spi.ctrl_cs
+top.tb_flash.spi.ctrl_reset
+@420
+top.tb_flash.spi.auto_next
+top.tb_flash.spi.auto_cnt_next
+@22
+#{top.tb_flash.spi.auto_data_next[31:0]} top.tb_flash.spi.auto_data_next[31] top.tb_flash.spi.auto_data_next[30] top.tb_flash.spi.auto_data_next[29] top.tb_flash.spi.auto_data_next[28] top.tb_flash.spi.auto_data_next[27] top.tb_flash.spi.auto_data_next[26] top.tb_flash.spi.auto_data_next[25] top.tb_flash.spi.auto_data_next[24] top.tb_flash.spi.auto_data_next[23] top.tb_flash.spi.auto_data_next[22] top.tb_flash.spi.auto_data_next[21] top.tb_flash.spi.auto_data_next[20] top.tb_flash.spi.auto_data_next[19] top.tb_flash.spi.auto_data_next[18] top.tb_flash.spi.auto_data_next[17] top.tb_flash.spi.auto_data_next[16] top.tb_flash.spi.auto_data_next[15] top.tb_flash.spi.auto_data_next[14] top.tb_flash.spi.auto_data_next[13] top.tb_flash.spi.auto_data_next[12] top.tb_flash.spi.auto_data_next[11] top.tb_flash.spi.auto_data_next[10] top.tb_flash.spi.auto_data_next[9] top.tb_flash.spi.auto_data_next[8] top.tb_flash.spi.auto_data_next[7] top.tb_flash.spi.auto_data_next[6] top.tb_flash.spi.auto_data_next[5] top.tb_flash.spi.auto_data_next[4] top.tb_flash.spi.auto_data_next[3] top.tb_flash.spi.auto_data_next[2] top.tb_flash.spi.auto_data_next[1] top.tb_flash.spi.auto_data_next[0]
+@200
+-
+-wb
+@28
+top.tb_flash.spi.wb_in.cyc
+top.tb_flash.spi.wb_in.stb
+top.tb_flash.spi.wb_in.we
+top.tb_flash.spi.wb_out.ack
+top.tb_flash.spi.wb_out.stall
+top.tb_flash.spi.wb_valid
+top.tb_flash.spi.wb_reg_valid
+top.tb_flash.spi.wb_map_valid
+@22
+#{top.tb_flash.spi.wb_in.adr[29:0]} top.tb_flash.spi.wb_in.adr[29] top.tb_flash.spi.wb_in.adr[28] top.tb_flash.spi.wb_in.adr[27] top.tb_flash.spi.wb_in.adr[26] top.tb_flash.spi.wb_in.adr[25] top.tb_flash.spi.wb_in.adr[24] top.tb_flash.spi.wb_in.adr[23] top.tb_flash.spi.wb_in.adr[22] top.tb_flash.spi.wb_in.adr[21] top.tb_flash.spi.wb_in.adr[20] top.tb_flash.spi.wb_in.adr[19] top.tb_flash.spi.wb_in.adr[18] top.tb_flash.spi.wb_in.adr[17] top.tb_flash.spi.wb_in.adr[16] top.tb_flash.spi.wb_in.adr[15] top.tb_flash.spi.wb_in.adr[14] top.tb_flash.spi.wb_in.adr[13] top.tb_flash.spi.wb_in.adr[12] top.tb_flash.spi.wb_in.adr[11] top.tb_flash.spi.wb_in.adr[10] top.tb_flash.spi.wb_in.adr[9] top.tb_flash.spi.wb_in.adr[8] top.tb_flash.spi.wb_in.adr[7] top.tb_flash.spi.wb_in.adr[6] top.tb_flash.spi.wb_in.adr[5] top.tb_flash.spi.wb_in.adr[4] top.tb_flash.spi.wb_in.adr[3] top.tb_flash.spi.wb_in.adr[2] top.tb_flash.spi.wb_in.adr[1] top.tb_flash.spi.wb_in.adr[0]
+@28
+top.tb_flash.spi.wb_sel_map
+top.tb_flash.spi.wb_sel_reg
+#{top.tb_flash.spi.wb_reg[2:0]} top.tb_flash.spi.wb_reg[2] top.tb_flash.spi.wb_reg[1] top.tb_flash.spi.wb_reg[0]
+@22
+#{top.tb_flash.spi.wb_in.sel[3:0]} top.tb_flash.spi.wb_in.sel[3] top.tb_flash.spi.wb_in.sel[2] top.tb_flash.spi.wb_in.sel[1] top.tb_flash.spi.wb_in.sel[0]
+#{top.tb_flash.spi.wb_in.dat[31:0]} top.tb_flash.spi.wb_in.dat[31] top.tb_flash.spi.wb_in.dat[30] top.tb_flash.spi.wb_in.dat[29] top.tb_flash.spi.wb_in.dat[28] top.tb_flash.spi.wb_in.dat[27] top.tb_flash.spi.wb_in.dat[26] top.tb_flash.spi.wb_in.dat[25] top.tb_flash.spi.wb_in.dat[24] top.tb_flash.spi.wb_in.dat[23] top.tb_flash.spi.wb_in.dat[22] top.tb_flash.spi.wb_in.dat[21] top.tb_flash.spi.wb_in.dat[20] top.tb_flash.spi.wb_in.dat[19] top.tb_flash.spi.wb_in.dat[18] top.tb_flash.spi.wb_in.dat[17] top.tb_flash.spi.wb_in.dat[16] top.tb_flash.spi.wb_in.dat[15] top.tb_flash.spi.wb_in.dat[14] top.tb_flash.spi.wb_in.dat[13] top.tb_flash.spi.wb_in.dat[12] top.tb_flash.spi.wb_in.dat[11] top.tb_flash.spi.wb_in.dat[10] top.tb_flash.spi.wb_in.dat[9] top.tb_flash.spi.wb_in.dat[8] top.tb_flash.spi.wb_in.dat[7] top.tb_flash.spi.wb_in.dat[6] top.tb_flash.spi.wb_in.dat[5] top.tb_flash.spi.wb_in.dat[4] top.tb_flash.spi.wb_in.dat[3] top.tb_flash.spi.wb_in.dat[2] top.tb_flash.spi.wb_in.dat[1] top.tb_flash.spi.wb_in.dat[0]
+#{top.tb_flash.spi.wb_out.dat[31:0]} top.tb_flash.spi.wb_out.dat[31] top.tb_flash.spi.wb_out.dat[30] top.tb_flash.spi.wb_out.dat[29] top.tb_flash.spi.wb_out.dat[28] top.tb_flash.spi.wb_out.dat[27] top.tb_flash.spi.wb_out.dat[26] top.tb_flash.spi.wb_out.dat[25] top.tb_flash.spi.wb_out.dat[24] top.tb_flash.spi.wb_out.dat[23] top.tb_flash.spi.wb_out.dat[22] top.tb_flash.spi.wb_out.dat[21] top.tb_flash.spi.wb_out.dat[20] top.tb_flash.spi.wb_out.dat[19] top.tb_flash.spi.wb_out.dat[18] top.tb_flash.spi.wb_out.dat[17] top.tb_flash.spi.wb_out.dat[16] top.tb_flash.spi.wb_out.dat[15] top.tb_flash.spi.wb_out.dat[14] top.tb_flash.spi.wb_out.dat[13] top.tb_flash.spi.wb_out.dat[12] top.tb_flash.spi.wb_out.dat[11] top.tb_flash.spi.wb_out.dat[10] top.tb_flash.spi.wb_out.dat[9] top.tb_flash.spi.wb_out.dat[8] top.tb_flash.spi.wb_out.dat[7] top.tb_flash.spi.wb_out.dat[6] top.tb_flash.spi.wb_out.dat[5] top.tb_flash.spi.wb_out.dat[4] top.tb_flash.spi.wb_out.dat[3] top.tb_flash.spi.wb_out.dat[2] top.tb_flash.spi.wb_out.dat[1] top.tb_flash.spi.wb_out.dat[0]
+@29
+#{top.tb_flash.wb_out.sel[3:0]} top.tb_flash.wb_out.sel[3] top.tb_flash.wb_out.sel[2] top.tb_flash.wb_out.sel[1] top.tb_flash.wb_out.sel[0]
+[pattern_trace] 1
+[pattern_trace] 0

@@ -1,0 +1,80 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Mon Jun  8 08:20:21 2020
+[*]
+[dumpfile] "/home/ANT.AMAZON.COM/benh/hackplace/microspi/foo.ghw"
+[dumpfile_mtime] "Mon Jun  8 08:15:03 2020"
+[dumpfile_size] 3214166
+[savefile] "/home/ANT.AMAZON.COM/benh/hackplace/microspi/sim.gtkw"
+[timestart] 2001553300000
+[size] 3789 2091
+[pos] -1 -1
+*-25.868788 2003632700000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_simple.
+[treeopen] top.tb_simple.spi.
+[sst_width] 301
+[signals_width] 498
+[sst_expanded] 1
+[sst_vpaned_height] 665
+@28
+top.tb_simple.spi.rst
+top.tb_simple.spi.clk
+@200
+-
+-SPI
+@28
+top.tb_simple.spi.cs_n[0]
+top.tb_simple.spi.sck
+top.tb_simple.spi.sdat_i[0]
+top.tb_simple.spi.sdat_o[0]
+top.tb_simple.spi.sdat_oe[0]
+@200
+-
+-spi_txrx
+@28
+top.tb_simple.spi.spi_rxtx.sck_up
+top.tb_simple.spi.spi_rxtx.sck_down
+#{top.tb_simple.spi.spi_rxtx.bit_count[2:0]} top.tb_simple.spi.spi_rxtx.bit_count[2] top.tb_simple.spi.spi_rxtx.bit_count[1] top.tb_simple.spi.spi_rxtx.bit_count[0]
+@420
+top.tb_simple.spi.spi_rxtx.state
+@28
+top.tb_simple.spi.spi_rxtx.start_cmd
+top.tb_simple.spi.spi_rxtx.cmd_valid
+top.tb_simple.spi.spi_rxtx.cmd_ack
+top.tb_simple.spi.spi_rxtx.d_ack
+@22
+#{top.tb_simple.spi.spi_rxtx.d_rx[7:0]} top.tb_simple.spi.spi_rxtx.d_rx[7] top.tb_simple.spi.spi_rxtx.d_rx[6] top.tb_simple.spi.spi_rxtx.d_rx[5] top.tb_simple.spi.spi_rxtx.d_rx[4] top.tb_simple.spi.spi_rxtx.d_rx[3] top.tb_simple.spi.spi_rxtx.d_rx[2] top.tb_simple.spi.spi_rxtx.d_rx[1] top.tb_simple.spi.spi_rxtx.d_rx[0]
+#{top.tb_simple.spi.spi_rxtx.d_tx[7:0]} top.tb_simple.spi.spi_rxtx.d_tx[7] top.tb_simple.spi.spi_rxtx.d_tx[6] top.tb_simple.spi.spi_rxtx.d_tx[5] top.tb_simple.spi.spi_rxtx.d_tx[4] top.tb_simple.spi.spi_rxtx.d_tx[3] top.tb_simple.spi.spi_rxtx.d_tx[2] top.tb_simple.spi.spi_rxtx.d_tx[1] top.tb_simple.spi.spi_rxtx.d_tx[0]
+#{top.tb_simple.spi.spi_rxtx.ireg[7:0]} top.tb_simple.spi.spi_rxtx.ireg[7] top.tb_simple.spi.spi_rxtx.ireg[6] top.tb_simple.spi.spi_rxtx.ireg[5] top.tb_simple.spi.spi_rxtx.ireg[4] top.tb_simple.spi.spi_rxtx.ireg[3] top.tb_simple.spi.spi_rxtx.ireg[2] top.tb_simple.spi.spi_rxtx.ireg[1] top.tb_simple.spi.spi_rxtx.ireg[0]
+#{top.tb_simple.spi.spi_rxtx.ireg_sh[7:0]} top.tb_simple.spi.spi_rxtx.ireg_sh[7] top.tb_simple.spi.spi_rxtx.ireg_sh[6] top.tb_simple.spi.spi_rxtx.ireg_sh[5] top.tb_simple.spi.spi_rxtx.ireg_sh[4] top.tb_simple.spi.spi_rxtx.ireg_sh[3] top.tb_simple.spi.spi_rxtx.ireg_sh[2] top.tb_simple.spi.spi_rxtx.ireg_sh[1] top.tb_simple.spi.spi_rxtx.ireg_sh[0]
+#{top.tb_simple.spi.spi_rxtx.oreg[7:0]} top.tb_simple.spi.spi_rxtx.oreg[7] top.tb_simple.spi.spi_rxtx.oreg[6] top.tb_simple.spi.spi_rxtx.oreg[5] top.tb_simple.spi.spi_rxtx.oreg[4] top.tb_simple.spi.spi_rxtx.oreg[3] top.tb_simple.spi.spi_rxtx.oreg[2] top.tb_simple.spi.spi_rxtx.oreg[1] top.tb_simple.spi.spi_rxtx.oreg[0]
+@200
+-
+-spi_wb
+@28
+top.tb_simple.spi.tx_rdy
+top.tb_simple.spi.tx_end
+@23
+#{top.tb_simple.spi.d_buf[7:0]} top.tb_simple.spi.d_buf[7] top.tb_simple.spi.d_buf[6] top.tb_simple.spi.d_buf[5] top.tb_simple.spi.d_buf[4] top.tb_simple.spi.d_buf[3] top.tb_simple.spi.d_buf[2] top.tb_simple.spi.d_buf[1] top.tb_simple.spi.d_buf[0]
+@200
+-
+-wb
+@28
+top.tb_simple.spi.wb_in.cyc
+top.tb_simple.spi.wb_in.stb
+top.tb_simple.spi.wb_in.we
+top.tb_simple.spi.wb_out.ack
+top.tb_simple.spi.wb_out.stall
+top.tb_simple.spi.wb_valid
+top.tb_simple.spi.wb_write
+@22
+#{top.tb_simple.spi.wb_in.adr[29:0]} top.tb_simple.spi.wb_in.adr[29] top.tb_simple.spi.wb_in.adr[28] top.tb_simple.spi.wb_in.adr[27] top.tb_simple.spi.wb_in.adr[26] top.tb_simple.spi.wb_in.adr[25] top.tb_simple.spi.wb_in.adr[24] top.tb_simple.spi.wb_in.adr[23] top.tb_simple.spi.wb_in.adr[22] top.tb_simple.spi.wb_in.adr[21] top.tb_simple.spi.wb_in.adr[20] top.tb_simple.spi.wb_in.adr[19] top.tb_simple.spi.wb_in.adr[18] top.tb_simple.spi.wb_in.adr[17] top.tb_simple.spi.wb_in.adr[16] top.tb_simple.spi.wb_in.adr[15] top.tb_simple.spi.wb_in.adr[14] top.tb_simple.spi.wb_in.adr[13] top.tb_simple.spi.wb_in.adr[12] top.tb_simple.spi.wb_in.adr[11] top.tb_simple.spi.wb_in.adr[10] top.tb_simple.spi.wb_in.adr[9] top.tb_simple.spi.wb_in.adr[8] top.tb_simple.spi.wb_in.adr[7] top.tb_simple.spi.wb_in.adr[6] top.tb_simple.spi.wb_in.adr[5] top.tb_simple.spi.wb_in.adr[4] top.tb_simple.spi.wb_in.adr[3] top.tb_simple.spi.wb_in.adr[2] top.tb_simple.spi.wb_in.adr[1] top.tb_simple.spi.wb_in.adr[0]
+@28
+#{top.tb_simple.spi.wb_reg[2:0]} top.tb_simple.spi.wb_reg[2] top.tb_simple.spi.wb_reg[1] top.tb_simple.spi.wb_reg[0]
+@22
+#{top.tb_simple.spi.wb_in.sel[3:0]} top.tb_simple.spi.wb_in.sel[3] top.tb_simple.spi.wb_in.sel[2] top.tb_simple.spi.wb_in.sel[1] top.tb_simple.spi.wb_in.sel[0]
+#{top.tb_simple.spi.wb_in.dat[31:0]} top.tb_simple.spi.wb_in.dat[31] top.tb_simple.spi.wb_in.dat[30] top.tb_simple.spi.wb_in.dat[29] top.tb_simple.spi.wb_in.dat[28] top.tb_simple.spi.wb_in.dat[27] top.tb_simple.spi.wb_in.dat[26] top.tb_simple.spi.wb_in.dat[25] top.tb_simple.spi.wb_in.dat[24] top.tb_simple.spi.wb_in.dat[23] top.tb_simple.spi.wb_in.dat[22] top.tb_simple.spi.wb_in.dat[21] top.tb_simple.spi.wb_in.dat[20] top.tb_simple.spi.wb_in.dat[19] top.tb_simple.spi.wb_in.dat[18] top.tb_simple.spi.wb_in.dat[17] top.tb_simple.spi.wb_in.dat[16] top.tb_simple.spi.wb_in.dat[15] top.tb_simple.spi.wb_in.dat[14] top.tb_simple.spi.wb_in.dat[13] top.tb_simple.spi.wb_in.dat[12] top.tb_simple.spi.wb_in.dat[11] top.tb_simple.spi.wb_in.dat[10] top.tb_simple.spi.wb_in.dat[9] top.tb_simple.spi.wb_in.dat[8] top.tb_simple.spi.wb_in.dat[7] top.tb_simple.spi.wb_in.dat[6] top.tb_simple.spi.wb_in.dat[5] top.tb_simple.spi.wb_in.dat[4] top.tb_simple.spi.wb_in.dat[3] top.tb_simple.spi.wb_in.dat[2] top.tb_simple.spi.wb_in.dat[1] top.tb_simple.spi.wb_in.dat[0]
+#{top.tb_simple.spi.wb_out.dat[31:0]} top.tb_simple.spi.wb_out.dat[31] top.tb_simple.spi.wb_out.dat[30] top.tb_simple.spi.wb_out.dat[29] top.tb_simple.spi.wb_out.dat[28] top.tb_simple.spi.wb_out.dat[27] top.tb_simple.spi.wb_out.dat[26] top.tb_simple.spi.wb_out.dat[25] top.tb_simple.spi.wb_out.dat[24] top.tb_simple.spi.wb_out.dat[23] top.tb_simple.spi.wb_out.dat[22] top.tb_simple.spi.wb_out.dat[21] top.tb_simple.spi.wb_out.dat[20] top.tb_simple.spi.wb_out.dat[19] top.tb_simple.spi.wb_out.dat[18] top.tb_simple.spi.wb_out.dat[17] top.tb_simple.spi.wb_out.dat[16] top.tb_simple.spi.wb_out.dat[15] top.tb_simple.spi.wb_out.dat[14] top.tb_simple.spi.wb_out.dat[13] top.tb_simple.spi.wb_out.dat[12] top.tb_simple.spi.wb_out.dat[11] top.tb_simple.spi.wb_out.dat[10] top.tb_simple.spi.wb_out.dat[9] top.tb_simple.spi.wb_out.dat[8] top.tb_simple.spi.wb_out.dat[7] top.tb_simple.spi.wb_out.dat[6] top.tb_simple.spi.wb_out.dat[5] top.tb_simple.spi.wb_out.dat[4] top.tb_simple.spi.wb_out.dat[3] top.tb_simple.spi.wb_out.dat[2] top.tb_simple.spi.wb_out.dat[1] top.tb_simple.spi.wb_out.dat[0]
+[pattern_trace] 1
+[pattern_trace] 0
