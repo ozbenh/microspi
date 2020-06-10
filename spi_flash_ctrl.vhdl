@@ -45,10 +45,14 @@ architecture rtl of spi_flash_ctrl is
     constant SPI_REG_CTRL         : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "001";
     constant SPI_REG_AUTO_CFG     : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "010";
 
-    -- Bits in CTRL register
-    constant SPI_CTRL_RESET_BIT  : integer := 0; -- Reset & drop CS
-    constant SPI_CTRL_CS_BIT     : integer := 1; -- CSn value. Also acts as
-                                                     -- manual mode enable
+    -- Control register
+    signal ctrl_reg    : std_ulogic_vector(15 downto 0) := (others => '0');
+    alias  ctrl_reset  : std_ulogic is ctrl_reg(0);
+    alias  ctrl_cs     : std_ulogic is ctrl_reg(1);
+    alias  ctrl_rsrv1  : std_ulogic is ctrl_reg(2);
+    alias  ctrl_rsrv2  : std_ulogic is ctrl_reg(3);
+    alias  ctrl_div    : std_ulogic_vector(7 downto 0) is ctrl_reg(15 downto 8);
+
     -- Auto mode config register
     signal auto_cfg_reg     : std_ulogic_vector(23 downto 0) := (others => '0');
     alias  auto_cfg_cmd     : std_ulogic_vector(7 downto 0) is auto_cfg_reg(7 downto 0);
@@ -63,14 +67,6 @@ architecture rtl of spi_flash_ctrl is
     constant SPI_AUTO_CFG_MODE_SINGLE : std_ulogic_vector(1 downto 0) := "00";
     constant SPI_AUTO_CFG_MODE_DUAL   : std_ulogic_vector(1 downto 0) := "10";
     constant SPI_AUTO_CFG_MODE_QUAD   : std_ulogic_vector(1 downto 0) := "11";
-
-    -- Control register
-    signal ctrl_reg    : std_ulogic_vector(15 downto 0) := (others => '0');
-    alias  ctrl_reset  : std_ulogic is ctrl_reg(0);
-    alias  ctrl_cs     : std_ulogic is ctrl_reg(1);
-    alias  ctrl_rsrv1  : std_ulogic is ctrl_reg(2);
-    alias  ctrl_rsrv2  : std_ulogic is ctrl_reg(3);
-    alias  ctrl_div    : std_ulogic_vector(7 downto 0) is ctrl_reg(15 downto 8);
 
     -- Internals
     signal cmd_valid   : std_ulogic;
