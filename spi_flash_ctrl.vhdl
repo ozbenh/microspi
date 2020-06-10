@@ -23,7 +23,7 @@ entity spi_flash_ctrl is
         wb_out : out wb_io_slave_out;
 
         -- Wishbone extra selects
-        wb_sel_reg : in std_ulogic; 
+        wb_sel_reg : in std_ulogic;
         wb_sel_map : in std_ulogic;
 
         -- SPI port
@@ -110,11 +110,12 @@ architecture rtl of spi_flash_ctrl is
     signal auto_next      : auto_state_t;
 
     -- Automatic mode latches
-    signal auto_data      : std_ulogic_vector(wb_out.dat'left downto 0);
-    signal auto_cnt       : integer range 0 to 63;
-    signal auto_state     : auto_state_t;
+    signal auto_data      : std_ulogic_vector(wb_out.dat'left downto 0) := (others => '0');
+    signal auto_cnt       : integer range 0 to 63 := 0;
+    signal auto_state     : auto_state_t := AUTO_IDLE;
 begin
 
+    -- Instanciate low level shifter
     spi_rxtx: entity work.spi_rxtx
         generic map (
             DATA_LINES => DATA_LINES
@@ -135,7 +136,7 @@ begin
             sdat_oe => sdat_oe,
             sdat_i => sdat_i
             );
-    
+
     -- Valid wb command
     wb_valid     <= wb_in.stb and wb_in.cyc;
     wb_reg_valid <= wb_valid and wb_sel_reg;
@@ -180,7 +181,7 @@ begin
             cs_n        <= not auto_cs;
         end if;
     end process;
-    
+
     -- Generate wishbone responses
     wb_response: process(all)
     begin
@@ -207,9 +208,9 @@ begin
                 wb_out.ack <= wb_valid;
                 case wb_reg is
                 when SPI_REG_CTRL =>
-                    wb_out.dat <= (SPI_CTRL_RESET_BIT  => ctrl_reset,
-                                   SPI_CTRL_CS_BIT     => ctrl_cs,
-                                   others => '0');
+                    wb_out.dat <= (ctrl_reg'range => ctrl_reg, others => '0');
+                when SPI_REG_AUTO_CFG =>
+                    wb_out.dat <= (auto_cfg_reg'range => auto_cfg_reg, others => '0');
                 when others => null;
                 end case;
             end if;
@@ -267,8 +268,8 @@ begin
         --  - Capture previous address and delay releasing CS to be able
         --    to "chain" accesses to consecutive addresses without a new
         --    address cycle
-                     
-        -- Reset        
+
+        -- Reset
         if rst = '1' or ctrl_reset = '1' then
             auto_cs <= '0';
             auto_cnt_next <= 0;
@@ -347,12 +348,12 @@ begin
                 auto_d_clks <= auto_cfg_dummies;
                 if d_ack = '1' then
                     auto_next <= AUTO_DAT0;
-                end if;                
+                end if;
             when AUTO_DAT0 =>
                 auto_cmd_valid <= '1';
                 auto_cmd_mode <= auto_cfg_mode & "0";
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
-                if d_ack = '1' then 
+                if d_ack = '1' then
                     auto_data_next(7 downto 0) <= d_rx;
                     auto_next <= AUTO_DAT1;
                 end if;
@@ -397,6 +398,19 @@ begin
 
     -- Register write sync machine
     reg_write: process(clk)
+        function reg_wr(r : in std_ulogic_vector;
+                        w : in wb_io_master_out) return std_ulogic_vector is
+            variable b : natural range 0 to 31;
+            variable t : std_ulogic_vector(r'range);
+        begin
+            t := r;
+            for i in r'range loop
+                if w.sel(i/8) = '1' then
+                    t(i) := w.dat(i);
+                end if;
+            end loop;
+            return t;
+        end function;
     begin
         if rising_edge(clk) then
             -- Reset auto-clear
@@ -423,13 +437,13 @@ begin
 
             if wb_reg_valid = '1' and wb_in.we = '1' and auto_state = AUTO_IDLE then
                 if wb_reg = SPI_REG_CTRL then
-                    ctrl_reg     <= wb_in.dat(ctrl_reg'range);
+                    ctrl_reg     <= reg_wr(ctrl_reg, wb_in);
                 end if;
                 if wb_reg = SPI_REG_AUTO_CFG then
-                    auto_cfg_reg <= wb_in.dat(auto_cfg_reg'range);
+                    auto_cfg_reg <= reg_wr(auto_cfg_reg, wb_in);
                 end if;
             end if;
         end if;
     end process;
- 
+
 end architecture;

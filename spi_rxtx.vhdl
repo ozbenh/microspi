@@ -36,7 +36,7 @@ entity spi_rxtx is
         -- Data
         d_tx        : in std_ulogic_vector(7 downto 0);
         d_rx        : out std_ulogic_vector(7 downto 0);
-        d_ack       : out std_ulogic;
+        d_ack       : out std_ulogic := '0';
 
         -- SPI port. These might need to go into special IOBUFs or STARTUPE2 on
         -- Xilinx.
@@ -84,7 +84,7 @@ architecture rtl of spi_rxtx is
     signal oreg       : std_ulogic_vector(7 downto 0);
 
     -- Input shift register (use fifo ?)
-    signal ireg       : std_ulogic_vector(7 downto 0);
+    signal ireg       : std_ulogic_vector(7 downto 0) := (others => '0');
 
     -- Bit counter
     signal bit_count  : std_ulogic_vector(2 downto 0);
@@ -201,7 +201,7 @@ begin
                 end if;
             end if;
         end if;
-    end process; 
+    end process;
 
     -- Run the bit counter in DATA state. It will update on rising
     -- SCK edges. It starts at d_clks on command latch
@@ -239,7 +239,7 @@ begin
                 else
                     oreg <= oreg(3 downto 0) & "0000";
                 end if;
-            end if;                
+            end if;
         end if;
     end process;
 

@@ -163,7 +163,7 @@ begin
                                  dat: in std_ulogic_vector(31 downto 0)) is
         begin
             wb_out.adr(7 downto 0) <= adr;
-            wb_out.sel <= encode_sel(adr(1 downto 0));
+            wb_out.sel <= "1111";
             wb_out.dat <= dat;
             wb_out.we  <= '1';
             wb_reg_cycle;
@@ -177,6 +177,16 @@ begin
             wb_out.we  <= '0';
             wb_reg_cycle;
             dat := rdat(7 downto 0);
+        end procedure;
+
+        procedure wb_reg32_read(adr: in  std_ulogic_vector(7 downto 0);
+                                dat: out std_ulogic_vector(31 downto 0)) is
+        begin
+            wb_out.adr(7 downto 0) <= adr;
+            wb_out.sel <= "1111";
+            wb_out.we  <= '0';
+            wb_reg_cycle;
+            dat := rdat;
         end procedure;
 
         procedure cs_set is
@@ -227,6 +237,7 @@ begin
         wb_out.stb <= '0';
         wb_out.cyc <= '0';
         wb_out.adr <= (others => '0');
+        wb_out.dat <= (others => '0');
         wb_sel_reg <= '0';
         wb_sel_map <= '0';
 
@@ -234,7 +245,19 @@ begin
         wait for 1 ms;
         rst <= '0';
         wait for 1 ms;
-        wait until rising_edge(clk);
+
+        -- Test partial register write
+        wb_reg32_read(x"04", d32);
+        report "CTRL reg before: " & to_hstring(d32);
+        assert d32 = x"00000200" severity failure;
+        cs_set;
+        wb_reg32_read(x"04", d32);
+        report "CTRL reg CS on : " & to_hstring(d32);
+        assert d32 = x"00000202" severity failure;
+        cs_clr;
+        wb_reg32_read(x"04", d32);
+        report "CTRL reg CS off: " & to_hstring(d32);
+        assert d32 = x"00000200" severity failure;
 
         -- Sending read ID command
         report "Sending RDID...";
