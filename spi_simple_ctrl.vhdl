@@ -56,6 +56,7 @@ architecture rtl of spi_simple_ctrl is
 
     -- Internals
     signal cmd_valid   : std_ulogic;
+    signal cmd_clk_div : natural range 0 to 255;
     signal cmd_ack     : std_ulogic;
     signal d_clks      : std_ulogic_vector(2 downto 0);
     signal d_tx        : std_ulogic_vector(7 downto 0);
@@ -84,6 +85,7 @@ begin
         port map(
             rst => rst,
             clk => clk,
+            clk_div => cmd_clk_div,
             cmd_valid => cmd_valid,
             cmd_mode => "000",
             cmd_ack => cmd_ack,
@@ -108,9 +110,12 @@ begin
     wb_reg       <= wb_in.adr(SPI_REG_BITS+1 downto 2);
 
     -- Command is valid when there's something in the buffer register
-    cmd_valid    <= not tx_rdy;
+    cmd_valid    <= not tx_rdy and not d_ack;
     d_tx         <= d_buf;
     d_clks       <= "111";
+
+    -- XX Add support for BAUD register
+    cmd_clk_div  <= CLK_DIV;
 
     -- Generate ack and stall
     --

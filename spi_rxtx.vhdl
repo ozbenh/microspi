@@ -7,14 +7,16 @@ use work.wishbone_types.all;
 
 entity spi_rxtx is
     generic (
-        CLK_DIV       : positive := 2;      -- Clock divider (0..255) XXX Make
-                                            -- runtime config ?
         DATA_LINES    : positive := 1       -- Number of data lines
-                                            -- (1=MISO/MOSI, otherwise 2 or 4)
+                                            -- 1=MISO/MOSI, otherwise 2 or 4
         );
     port (
         clk : in std_ulogic;
         rst : in std_ulogic;
+
+        -- Clock divider
+        -- SCK = CLK/((CLK_DIV+1)*2) : 0=CLK/2, 1=CLK/4, 2=CLK/6....
+        clk_div     : in natural range 0 to 255;
 
         -- Command port
         --
@@ -120,7 +122,8 @@ begin
 
     -- Clock generation
     sck_gen: process(clk)
-        variable counter : integer range 0 to CLK_DIV;
+        variable counter : integer range 0 to 255 := 0;
+        variable act_div : integer range 0 to 255 := 255;
     begin
         if rising_edge(clk) then
             if rst = '1' then
@@ -128,8 +131,10 @@ begin
                 sck_1 <= '1';
                 sck_up <= '0';
                 sck_down <= '0';
-            elsif counter = CLK_DIV then
+                act_div := 255;
+            elsif counter = act_div then
                 counter := 0;
+                act_div := clk_div;
 
                 -- Internal version of the clock
                 sck_0 <= not sck_0;

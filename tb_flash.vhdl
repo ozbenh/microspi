@@ -159,6 +159,16 @@ begin
             wb_reg_cycle;
         end procedure;
 
+        procedure wb_reg32_write(adr: in std_ulogic_vector(7 downto 0);
+                                 dat: in std_ulogic_vector(31 downto 0)) is
+        begin
+            wb_out.adr(7 downto 0) <= adr;
+            wb_out.sel <= encode_sel(adr(1 downto 0));
+            wb_out.dat <= dat;
+            wb_out.we  <= '1';
+            wb_reg_cycle;
+        end procedure;
+
         procedure wb_reg_read(adr: in  std_ulogic_vector(7 downto 0);
                               dat: out std_ulogic_vector(7 downto 0)) is
         begin
@@ -177,6 +187,11 @@ begin
         procedure cs_clr is
         begin
             wb_reg_write(x"04", x"00");
+            wait until rising_edge(clk);
+            wait until rising_edge(clk);
+            wait until rising_edge(clk);
+            wait until rising_edge(clk);
+            wait until rising_edge(clk);
         end procedure;
 
         procedure cmd_write(cmd : in std_ulogic_vector(7 downto 0)) is
@@ -463,8 +478,33 @@ begin
         assert dat = x"02" report "Unexpected result" severity failure;
         dat4_read(dat);
         cs_clr;
-      
-        wait for 1000 ns;
+
+        -- Switch auto-mode to quad
+        report "Switching map to QUAD mode...";
+        wb_reg32_write(x"08",
+                       x"00" &          -- unused
+                       x"01" &          -- clk div = 1 (CLK/4)
+                       "00" &           -- reserved
+                       "0" &            -- addr4 = 0
+                       "11" &           -- mode = quad
+                       "111" &          -- dummies = 7 (8 bits)
+                       x"6b"            -- command = 6b (QUAD FAST READ)
+                       );
+
+        -- Try reading via memory map
+        report "Reading map...";
+        wb_map_read(x"000000", d32);
+        report "DATA0=" & to_hstring(d32);
+        wb_map_read(x"000000", d32);
+        report "DATA0=" & to_hstring(d32);
+        wb_map_read(x"000004", d32);
+        report "DATA4=" & to_hstring(d32);
+        wb_map_read(x"000004", d32);
+        report "DATA4=" & to_hstring(d32);
+        wb_map_read(x"000008", d32);
+        report "DATA8=" & to_hstring(d32);
+
+     wait for 1000 ns;
         std.env.finish;
     end process;
 end;
