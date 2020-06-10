@@ -244,7 +244,7 @@ ENTITY s25fl128s IS
         mem_file_name     : STRING    := "s25fl128s.mem";
         otp_file_name     : STRING    := "s25fl128sOTP.mem";
 
-        UserPreload       : BOOLEAN   := FALSE; --TRUE;
+        UserPreload       : BOOLEAN   := FALSE;
         LongTimming       : BOOLEAN   := TRUE;
 
         -- For FMF SDF technology file usage
@@ -6676,97 +6676,99 @@ BEGIN
         END IF;
     END PROCESS RST_PULL_UP;
 
-    ---------------------------------------------------------------------------
-    ---- File Read Section - Preload Control
-    ---------------------------------------------------------------------------
-    -- MemPreload : PROCESS
+    MaybePreload: if UserPreload generate
+        ---------------------------------------------------------------------------
+        ---- File Read Section - Preload Control
+        ---------------------------------------------------------------------------
+        MemPreload : PROCESS
 
-    --     -- text file input variables
-    --     FILE mem_file         : text  is  mem_file_name;
-    --     FILE otp_file         : text  is  otp_file_name;
-    --     VARIABLE ind          : NATURAL RANGE 0 TO AddrRANGE := 0;
-    --     VARIABLE otp_ind      : NATURAL RANGE 16#000# TO 16#3FF# := 16#000#;
-    --     VARIABLE buf          : line;
+            -- text file input variables
+            FILE mem_file         : text  is  mem_file_name;
+            FILE otp_file         : text  is  otp_file_name;
+            VARIABLE ind          : NATURAL RANGE 0 TO AddrRANGE := 0;
+            VARIABLE otp_ind      : NATURAL RANGE 16#000# TO 16#3FF# := 16#000#;
+            VARIABLE buf          : line;
 
-    -- BEGIN
-    ---------------------------------------------------------------------------
-    --s25fl128s memory preload file format
------------------------------------
-    ---------------------------------------------------------------------------
-    --   /       - comment
-    --   @aaaaaa - <aaaaaa> stands for address
-    --   dd      - <dd> is byte to be written at Mem(aaaaaa++)
-    --             (aaaaaa is incremented at every load)
-    --   only first 1-7 columns are loaded. NO empty lines !!!!!!!!!!!!!!!!
-    ---------------------------------------------------------------------------
+        BEGIN
+            ---------------------------------------------------------------------------
+            --s25fl128s memory preload file format
+            -----------------------------------
+            ---------------------------------------------------------------------------
+            --   /       - comment
+            --   @aaaaaa - <aaaaaa> stands for address
+            --   dd      - <dd> is byte to be written at Mem(aaaaaa++)
+            --             (aaaaaa is incremented at every load)
+            --   only first 1-7 columns are loaded. NO empty lines !!!!!!!!!!!!!!!!
+            ---------------------------------------------------------------------------
 
-        -- memory preload
-    --     IF (mem_file_name /= "none" AND UserPreload) THEN
-    --         ind := 0;
-    --         Mem := (OTHERS => MaxData);
-    --         WHILE (not ENDFILE (mem_file)) LOOP
-    --             READLINE (mem_file, buf);
-    --             IF buf(1) = '/' THEN
-    --                 NEXT;
-    --             ELSIF buf(1) = '@' THEN
-    --                 IF ind > AddrRANGE THEN
-    --                     ASSERT false
-    --                         REPORT "Given preload address is out of" &
-    --                                "memory address range"
-    --                         SEVERITY warning;
-    --                 ELSE
-    --                     ind := h(buf(2 to 7)); --address
-    --                 END IF;
-    --             ELSE
-    --                 Mem(ind) := h(buf(1 to 2));
-    --                 IF ind < AddrRANGE THEN
-    --                     ind := ind + 1;
-    --                 END IF;
-    --             END IF;
-    --         END LOOP;
-    --     END IF;
+            -- memory preload
+            IF (mem_file_name /= "none" AND UserPreload) THEN
+                ind := 0;
+                --Mem := (OTHERS => MaxData);
+                WHILE (not ENDFILE (mem_file)) LOOP
+                    READLINE (mem_file, buf);
+                    IF buf(1) = '/' THEN
+                        NEXT;
+                    ELSIF buf(1) = '@' THEN
+                        IF ind > AddrRANGE THEN
+                            ASSERT false
+                                REPORT "Given preload address is out of" &
+                                "memory address range"
+                                SEVERITY warning;
+                        ELSE
+                            ind := h(buf(2 to 7)); --address
+                        END IF;
+                    ELSE
+                        Mem(ind) := h(buf(1 to 2));
+                        IF ind < AddrRANGE THEN
+                            ind := ind + 1;
+                        END IF;
+                    END IF;
+                END LOOP;
+            END IF;
 
-    -- ---------------------------------------------------------------------------
-    -- --s25fl128s_otp memory preload file format
-    -- ---------------------------------------------------------------------------
-    -- --   /       - comment
-    -- --   @aaa - <aaa> stands for address
-    -- --   dd      - <dd> is byte to be written at OTPMem(aaa++)
-    -- --             (aaa is incremented at every load)
-    -- --   only first 1-4 columns are loaded. NO empty lines !!!!!!!!!!!!!!!!
-    -- ---------------------------------------------------------------------------
+            -- ---------------------------------------------------------------------------
+            -- --s25fl128s_otp memory preload file format
+            -- ---------------------------------------------------------------------------
+            -- --   /       - comment
+            -- --   @aaa - <aaa> stands for address
+            -- --   dd      - <dd> is byte to be written at OTPMem(aaa++)
+            -- --             (aaa is incremented at every load)
+            -- --   only first 1-4 columns are loaded. NO empty lines !!!!!!!!!!!!!!!!
+            -- ---------------------------------------------------------------------------
 
-    --      -- memory preload
-    --     IF (otp_file_name /= "none" AND UserPreload) THEN
-    --         otp_ind := 16#000#;
-    --         OTPMem := (OTHERS => MaxData);
-    --         WHILE (not ENDFILE (otp_file)) LOOP
-    --             READLINE (otp_file, buf);
-    --             IF buf(1) = '/' THEN
-    --                 NEXT;
-    --             ELSIF buf(1) = '@' THEN
-    --                 IF otp_ind > 16#3FF# OR otp_ind < 16#000# THEN
-    --                     ASSERT false
-    --                         REPORT "Given preload address is out of" &
-    --                                "OTP address range"
-    --                         SEVERITY warning;
-    --                 ELSE
-    --                     otp_ind := h(buf(2 to 4)); --address
-    --                 END IF;
-    --             ELSE
-    --                 OTPMem(otp_ind) := h(buf(1 to 2));
-    --                 otp_ind := otp_ind + 1;
-    --             END IF;
-    --         END LOOP;
-    --     END IF;
+            --      -- memory preload
+            IF (otp_file_name /= "none" AND UserPreload) THEN
+                otp_ind := 16#000#;
+                OTPMem := (OTHERS => MaxData);
+                WHILE (not ENDFILE (otp_file)) LOOP
+                    READLINE (otp_file, buf);
+                    IF buf(1) = '/' THEN
+                        NEXT;
+                    ELSIF buf(1) = '@' THEN
+                        IF otp_ind > 16#3FF# OR otp_ind < 16#000# THEN
+                            ASSERT false
+                                REPORT "Given preload address is out of" &
+                                "OTP address range"
+                                SEVERITY warning;
+                        ELSE
+                            otp_ind := h(buf(2 to 4)); --address
+                        END IF;
+                    ELSE
+                        OTPMem(otp_ind) := h(buf(1 to 2));
+                        otp_ind := otp_ind + 1;
+                    END IF;
+                END LOOP;
+            END IF;
 
-    --     LOCK_BYTE1 := to_slv(OTPMem(16#10#),8);
-    --     LOCK_BYTE2 := to_slv(OTPMem(16#11#),8);
-    --     LOCK_BYTE3 := to_slv(OTPMem(16#12#),8);
-    --     LOCK_BYTE4 := to_slv(OTPMem(16#13#),8);
+            LOCK_BYTE1 := to_slv(OTPMem(16#10#),8);
+            LOCK_BYTE2 := to_slv(OTPMem(16#11#),8);
+            LOCK_BYTE3 := to_slv(OTPMem(16#12#),8);
+            LOCK_BYTE4 := to_slv(OTPMem(16#13#),8);
 
-    --     WAIT;
-    -- END PROCESS MemPreload;
+            WAIT;
+        END PROCESS MemPreload;
+    end generate;
 
     ----------------------------------------------------------------------------
     -- Path Delay Section
