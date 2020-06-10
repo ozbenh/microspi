@@ -54,7 +54,7 @@ architecture rtl of spi_flash_ctrl is
     alias  ctrl_div    : std_ulogic_vector(7 downto 0) is ctrl_reg(15 downto 8);
 
     -- Auto mode config register
-    signal auto_cfg_reg     : std_ulogic_vector(23 downto 0) := (others => '0');
+    signal auto_cfg_reg     : std_ulogic_vector(29 downto 0) := (others => '0');
     alias  auto_cfg_cmd     : std_ulogic_vector(7 downto 0) is auto_cfg_reg(7 downto 0);
     alias  auto_cfg_dummies : std_ulogic_vector(2 downto 0) is auto_cfg_reg(10 downto 8);
     alias  auto_cfg_mode    : std_ulogic_vector(1 downto 0) is auto_cfg_reg(12 downto 11);
@@ -62,6 +62,7 @@ architecture rtl of spi_flash_ctrl is
     alias  auto_cfg_rsrv1   : std_ulogic                    is auto_cfg_reg(14);
     alias  auto_cfg_rsrv2   : std_ulogic                    is auto_cfg_reg(15);
     alias  auto_cfg_div     : std_ulogic_vector(7 downto 0) is auto_cfg_reg(23 downto 16);
+    alias  auto_cfg_cstout  : std_ulogic_vector(5 downto 0) is auto_cfg_reg(29 downto 24);
 
     -- Constants below match top 2 bits of rxtx "mode"
     constant SPI_AUTO_CFG_MODE_SINGLE : std_ulogic_vector(1 downto 0) := "00";
@@ -83,17 +84,18 @@ architecture rtl of spi_flash_ctrl is
     signal wb_map_valid : std_ulogic;
     signal wb_reg       : std_ulogic_vector(SPI_REG_BITS-1 downto 0);
 
-    -- Auto mode clock counts XXX FIXME
-    constant CS_DELAY_ASSERT   : integer := 1;  -- CS low to cmd
-    constant CS_DELAY_DEASSERT : integer := 1;  -- last byte to CS high
-    constant CS_DELAY_RECOVERY : integer := 10; -- CS high to CS low
+    -- Auto mode clock counts XXX FIXME: Look at reasonable values based
+    -- on system clock maybe ? Or make them programmable.
+    constant CS_DELAY_ASSERT    : integer := 1;   -- CS low to cmd
+    constant CS_DELAY_RECOVERY  : integer := 10;  -- CS high to CS low
+    constant DEFAULT_CS_TIMEOUT : integer := 32;
 
     -- Automatic mode state
     type auto_state_t is (AUTO_IDLE, AUTO_CS_ON, AUTO_CMD,
                           AUTO_ADR0, AUTO_ADR1, AUTO_ADR2, AUTO_ADR3,
                           AUTO_DUMMY,
                           AUTO_DAT0, AUTO_DAT1, AUTO_DAT2, AUTO_DAT3,
-                          AUTO_CS_OFF, AUTO_RECOVERY);
+                          AUTO_SEND_ACK, AUTO_WAIT_REQ, AUTO_RECOVERY);
     -- Automatic mode signals
     signal auto_cs        : std_ulogic;
     signal auto_cmd_valid : std_ulogic;
@@ -104,11 +106,15 @@ architecture rtl of spi_flash_ctrl is
     signal auto_cnt_next  : integer range 0 to 63;
     signal auto_ack       : std_ulogic;
     signal auto_next      : auto_state_t;
+    signal auto_lad_next  : std_ulogic_vector(31 downto 0);
+    signal auto_latch_adr : std_ulogic;
 
     -- Automatic mode latches
     signal auto_data      : std_ulogic_vector(wb_out.dat'left downto 0) := (others => '0');
     signal auto_cnt       : integer range 0 to 63 := 0;
     signal auto_state     : auto_state_t := AUTO_IDLE;
+    signal auto_last_addr : std_ulogic_vector(31 downto 0);
+
 begin
 
     -- Instanciate low level shifter
@@ -223,11 +229,15 @@ begin
             auto_state <= auto_next;
             auto_cnt   <= auto_cnt_next;
             auto_data  <= auto_data_next;
+            if auto_latch_adr = '1' then
+                auto_last_addr <= auto_lad_next;
+            end if;
         end if;
     end process;
 
     auto_comb: process(all)
-        variable auto_addr : std_ulogic_vector(31 downto 0);
+        variable addr : std_ulogic_vector(31 downto 0);
+        variable req_is_next : boolean;
 
         function mode_to_clks(mode: std_ulogic_vector(1 downto 0)) return std_ulogic_vector is
         begin
@@ -247,23 +257,25 @@ begin
         auto_d_txd <= x"00";
         auto_cmd_mode <= "000";
         auto_d_clks <= "111";
+        auto_latch_adr <= '0';
 
         -- Default next state
         auto_next <= auto_state;
         auto_cnt_next <= auto_cnt;
         auto_data_next <= auto_data;
 
-        -- Convert wishbone address into a flash address
-        -- For now assume 3-bytes addresses. We can add
-        -- larger flash support later.
-        auto_addr := "0000" & wb_in.adr(27 downto 2) & "00";
+        -- Convert wishbone address into a flash address. We mask
+        -- off the 4 top address bits to get rid of the "f" there.
+        addr := "00" & wb_in.adr(29 downto 2) & "00";
+
+        -- Calculate the next address for store & compare later
+        auto_lad_next <= std_ulogic_vector(unsigned(addr) + 4);
+
+        -- Match incoming request address with next address
+        req_is_next := addr = auto_last_addr;
 
         -- XXX TODO:
-        --
         --  - Support < 32-bit accesses
-        --  - Capture previous address and delay releasing CS to be able
-        --    to "chain" accesses to consecutive addresses without a new
-        --    address cycle
 
         -- Reset
         if rst = '1' or ctrl_reset = '1' then
@@ -312,25 +324,25 @@ begin
                     end if;
                 end if;
             when AUTO_ADR3 =>
-                auto_d_txd <= "00" & auto_addr(29 downto 24);
+                auto_d_txd <= addr(31 downto 24);
                 auto_cmd_valid <= '1';
                 if d_ack = '1' then
                     auto_next <= AUTO_ADR2;
                 end if;
             when AUTO_ADR2 =>
-                auto_d_txd <= auto_addr(23 downto 16);
+                auto_d_txd <= addr(23 downto 16);
                 auto_cmd_valid <= '1';
                 if d_ack = '1' then
                     auto_next <= AUTO_ADR1;
                 end if;
             when AUTO_ADR1 =>
-                auto_d_txd <= auto_addr(15 downto 8);
+                auto_d_txd <= addr(15 downto 8);
                 auto_cmd_valid <= '1';
                 if d_ack = '1' then
                     auto_next <= AUTO_ADR0;
                 end if;
             when AUTO_ADR0 =>
-                auto_d_txd <= auto_addr(7 downto 0);
+                auto_d_txd <= addr(7 downto 0);
                 auto_cmd_valid <= '1';
                 if d_ack = '1' then
                     if auto_cfg_dummies = "000" then
@@ -375,15 +387,27 @@ begin
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
                 if d_ack = '1' then
                     auto_data_next(31 downto 24) <= d_rx;
-                    auto_next <= AUTO_CS_OFF;
-                    auto_cnt_next <= CS_DELAY_ASSERT;
+                    auto_next <= AUTO_SEND_ACK;
+                    auto_latch_adr <= '1';
                 end if;
-            when AUTO_CS_OFF =>
-                if auto_cnt = 0 then
-                    auto_ack <= '1';
+            when AUTO_SEND_ACK =>
+                auto_ack <= '1';
+                auto_cnt_next <= to_integer(unsigned(auto_cfg_cstout));
+                auto_next <= AUTO_WAIT_REQ;
+            when AUTO_WAIT_REQ =>
+                -- Incoming bus request we can take ? Otherwise do we need
+                -- to cancel the wait ?
+                if wb_map_valid = '1' and req_is_next and wb_in.we = '0' then
+                    auto_next <= AUTO_DAT0;
+                elsif wb_map_valid = '1' or wb_reg_valid = '1' or auto_cnt = 0 then
+                    -- This means we can drop the CS right on the next clock.
+                    -- We make the assumption here that the two cycles min
+                    -- spent in AUTO_SEND_ACK and AUTO_WAIT_REQ are long enough
+                    -- to deassert CS. If that doesn't hold true in the future,
+                    -- add another state.
                     auto_cnt_next <= CS_DELAY_RECOVERY;
                     auto_next <= AUTO_RECOVERY;
-                end if;
+                end if; 
             when AUTO_RECOVERY =>
                 if auto_cnt = 0 then
                     auto_next <= AUTO_IDLE;
@@ -429,6 +453,7 @@ begin
                 auto_cfg_rsrv1   <= '0';
                 auto_cfg_rsrv2   <= '0';
                 auto_cfg_div     <= std_ulogic_vector(to_unsigned(DEF_CLK_DIV, 8));
+                auto_cfg_cstout  <= std_ulogic_vector(to_unsigned(DEFAULT_CS_TIMEOUT, 6));
             end if;
 
             if wb_reg_valid = '1' and wb_in.we = '1' and auto_state = AUTO_IDLE then

@@ -362,7 +362,7 @@ begin
         dat_write(x"00");
         -- Data
         dat_read(dat);
-        report "DATaA0=" & to_hstring(dat);
+        report "DATA0=" & to_hstring(dat);
         assert dat = x"aa" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA1=" & to_hstring(dat);
@@ -505,7 +505,7 @@ begin
         -- Switch auto-mode to quad
         report "Switching map to QUAD mode...";
         wb_reg32_write(x"08",
-                       x"00" &          -- unused
+                       x"20" &          -- CS timeout
                        x"01" &          -- clk div = 1 (CLK/4)
                        "00" &           -- reserved
                        "0" &            -- addr4 = 0
@@ -518,14 +518,14 @@ begin
         report "Reading map...";
         wb_map_read(x"000000", d32);
         report "DATA0=" & to_hstring(d32);
-        wb_map_read(x"000000", d32);
-        report "DATA0=" & to_hstring(d32);
-        wb_map_read(x"000004", d32);
-        report "DATA4=" & to_hstring(d32);
         wb_map_read(x"000004", d32);
         report "DATA4=" & to_hstring(d32);
         wb_map_read(x"000008", d32);
         report "DATA8=" & to_hstring(d32);
+        wb_map_read(x"000004", d32);
+        report "DATA0=" & to_hstring(d32);
+        wb_map_read(x"000008", d32);
+        report "DATA4=" & to_hstring(d32);
 
      wait for 1000 ns;
         std.env.finish;
