@@ -57,7 +57,7 @@ architecture rtl of spi_simple_ctrl is
     -- Internals
     signal cmd_valid   : std_ulogic;
     signal cmd_clk_div : natural range 0 to 255;
-    signal cmd_ack     : std_ulogic;
+    signal cmd_ready   : std_ulogic;
     signal d_clks      : std_ulogic_vector(2 downto 0);
     signal d_tx        : std_ulogic_vector(7 downto 0);
     signal d_rx        : std_ulogic_vector(7 downto 0);
@@ -85,14 +85,14 @@ begin
         port map(
             rst => rst,
             clk => clk,
-            clk_div => cmd_clk_div,
-            cmd_valid => cmd_valid,
-            cmd_mode => "000",
-            cmd_ack => cmd_ack,
-            d_clks => d_clks,
-            d_tx => d_tx,
-            d_rx => d_rx,
-            d_ack => d_ack,
+            clk_div_i => cmd_clk_div,
+            cmd_valid_i => cmd_valid,
+            cmd_ready_o => cmd_ready,
+            cmd_mode_i => "000",
+            cmd_clks_i => d_clks,
+            cmd_txd_i => d_tx,
+            d_rxd_o => d_rx,
+            d_ack_o => d_ack,
             sck => sck,
             sdat_o => sdat_o,
             sdat_oe => sdat_oe,
@@ -174,7 +174,7 @@ begin
                 tx_rdy <= '0';
                 tx_end <= '0';
                 d_buf  <= wb_in.dat(7 downto 0);
-            elsif cmd_ack = '1' then
+            elsif cmd_ready = '1' then
                 -- The byte was consumed by the shifter, populate the data
                 -- buffer with the previous input byte and mark us ready
                 -- to receive a new byte to send.

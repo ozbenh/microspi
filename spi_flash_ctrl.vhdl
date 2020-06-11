@@ -44,6 +44,7 @@ architecture rtl of spi_flash_ctrl is
     constant SPI_REG_DATA         : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "000";
     constant SPI_REG_CTRL         : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "001";
     constant SPI_REG_AUTO_CFG     : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "010";
+    constant SPI_REG_INVALID      : std_ulogic_vector(SPI_REG_BITS-1 downto 0) := "111";
 
     -- Control register
     signal ctrl_reg    : std_ulogic_vector(15 downto 0) := (others => '0');
@@ -69,18 +70,29 @@ architecture rtl of spi_flash_ctrl is
     constant SPI_AUTO_CFG_MODE_DUAL   : std_ulogic_vector(1 downto 0) := "10";
     constant SPI_AUTO_CFG_MODE_QUAD   : std_ulogic_vector(1 downto 0) := "11";
 
-    -- Internals
-    signal cmd_valid   : std_ulogic;
-    signal cmd_clk_div : natural range 0 to 255;
-    signal cmd_mode    : std_ulogic_vector(2 downto 0);
-    signal cmd_ack     : std_ulogic;
-    signal d_clks      : std_ulogic_vector(2 downto 0);
-    signal d_rx        : std_ulogic_vector(7 downto 0);
-    signal d_tx        : std_ulogic_vector(7 downto 0);
-    signal d_ack       : std_ulogic;
+    -- Signals to rxtx
+    signal cmd_valid    : std_ulogic;
+    signal cmd_clk_div  : natural range 0 to 255;
+    signal cmd_mode     : std_ulogic_vector(2 downto 0);
+    signal cmd_ready    : std_ulogic;
+    signal d_clks       : std_ulogic_vector(2 downto 0);
+    signal d_rx         : std_ulogic_vector(7 downto 0);
+    signal d_tx         : std_ulogic_vector(7 downto 0);
+    signal d_ack        : std_ulogic;
+    signal bus_idle     : std_ulogic;
 
+    -- Latch to track that we have a pending read
+    signal pending_read : std_ulogic;
+
+    -- Wishbone latches
+    signal wb_req       : wb_io_master_out;
+    signal wb_stash     : wb_io_master_out;
+    signal wb_rsp       : wb_io_slave_out;
+
+    -- Wishbone decode
     signal wb_valid     : std_ulogic;
     signal wb_reg_valid : std_ulogic;
+    signal wb_reg_dat_v : std_ulogic;
     signal wb_map_valid : std_ulogic;
     signal wb_reg       : std_ulogic_vector(SPI_REG_BITS-1 downto 0);
 
@@ -95,6 +107,7 @@ architecture rtl of spi_flash_ctrl is
                           AUTO_ADR0, AUTO_ADR1, AUTO_ADR2, AUTO_ADR3,
                           AUTO_DUMMY,
                           AUTO_DAT0, AUTO_DAT1, AUTO_DAT2, AUTO_DAT3,
+                          AUTO_DAT0_DATA, AUTO_DAT1_DATA, AUTO_DAT2_DATA, AUTO_DAT3_DATA,
                           AUTO_SEND_ACK, AUTO_WAIT_REQ, AUTO_RECOVERY);
     -- Automatic mode signals
     signal auto_cs        : std_ulogic;
@@ -125,14 +138,15 @@ begin
         port map(
             rst => rst,
             clk => clk,
-            clk_div => cmd_clk_div,
-            cmd_valid => cmd_valid,
-            cmd_mode => cmd_mode,
-            cmd_ack => cmd_ack,
-            d_clks => d_clks,
-            d_rx => d_rx,
-            d_tx => d_tx,
-            d_ack => d_ack,
+            clk_div_i => cmd_clk_div,
+            cmd_valid_i => cmd_valid,
+            cmd_ready_o => cmd_ready,
+            cmd_mode_i => cmd_mode,
+            cmd_clks_i => d_clks,
+            cmd_txd_i => d_tx,
+            d_rxd_o => d_rx,
+            d_ack_o => d_ack,
+            bus_idle_o => bus_idle,
             sck => sck,
             sdat_o => sdat_o,
             sdat_oe => sdat_oe,
@@ -140,42 +154,62 @@ begin
             );
 
     -- Valid wb command
-    wb_valid     <= wb_in.stb and wb_in.cyc;
+    wb_valid     <= wb_req.stb and wb_req.cyc;
     wb_reg_valid <= wb_valid and wb_sel_reg;
     wb_map_valid <= wb_valid and wb_sel_map;
 
-    -- Register decode. For map accesses, make it look like "data"
-    wb_reg       <= wb_in.adr(SPI_REG_BITS+1 downto 2) when wb_reg_valid else SPI_REG_DATA;
+    -- Register decode. For map accesses, make it look like "invalid"
+    wb_reg       <= wb_req.adr(SPI_REG_BITS+1 downto 2) when wb_reg_valid else SPI_REG_INVALID;
 
-    -- Big mode mux for SPI control
-    mode_mux: process(all)
+    -- Shortcut because we test that a lot: data register access
+    wb_reg_dat_v <= '1' when wb_reg = SPI_REG_DATA else '0';
+
+    -- Wishbone request -> SPI request
+    wb_request_sync: process(clk)
+    begin
+        if  rising_edge(clk) then
+            -- We need to latch whether a read is in progress to block
+            -- a subsequent store, otherwise the acks will collide.
+            --
+            -- We are heavy handed and force a wait for an idle bus if
+            -- a store is behind a load. Shouldn't happen with flashes
+            -- in practice.
+            --
+            if cmd_valid = '1' and cmd_ready = '1' then
+                pending_read <= '1';
+            elsif bus_idle = '1' then
+                pending_read <= '0'; 
+            end if;
+        end if;
+    end process;
+
+    wb_request_comb: process(all)
     begin
         if ctrl_cs = '1' then
-            -- Note: The "and not d_ack" below makes cmd_valid go down a cycle
-            -- earlier. This is necessary for CLK_DIV=0 (SCLK=CLK/2) otherwise
-            -- we will latch a spurrious new command on the next cycle.
-            --
-            cmd_valid  <= wb_reg_valid and not d_ack when wb_reg = SPI_REG_DATA else '0';
+            -- Data register access (see wb_request_sync)
+            cmd_valid  <= wb_reg_dat_v and not (pending_read and wb_req.we);
 
             -- Clock divider from control reg
             cmd_clk_div <= to_integer(unsigned(ctrl_div));
 
-            -- Mode based on sel: LSB is single mode, next is dual, next is quad
-            if wb_in.sel = "0010" then
-                cmd_mode <= "10" & wb_in.we;
+            -- Mode based on sel
+            if wb_req.sel = "0010" then
+                -- dual mode
+                cmd_mode <= "10" & wb_req.we;
                 d_clks   <= "011";
-            elsif wb_in.sel = "0100" then
-                cmd_mode <= "11" & wb_in.we;
+            elsif wb_req.sel = "0100" then
+                -- quad mode
+                cmd_mode <= "11" & wb_req.we;
                 d_clks   <= "001";
             else
-                cmd_mode <= "00" & wb_in.we;
+                -- single bit
+                cmd_mode <= "01" & wb_req.we;
                 d_clks   <= "111";
             end if;
-            d_tx       <= wb_in.dat(7 downto 0);
+            d_tx       <= wb_req.dat(7 downto 0);
             cs_n       <= not ctrl_cs;
         else
-            -- See above note about "and not d_ack"
-            cmd_valid   <= auto_cmd_valid and not d_ack;
+            cmd_valid   <= auto_cmd_valid;
             cmd_mode    <= auto_cmd_mode;
             cmd_clk_div <= to_integer(unsigned(auto_cfg_div));
             d_tx        <= auto_d_txd;
@@ -185,41 +219,122 @@ begin
     end process;
 
     -- Generate wishbone responses
-    wb_response: process(all)
+    --
+    -- Note: wb_out and wb_in should only appear in this synchronous process
+    --
+    -- Everything else should work on wb_req and wb_rsp
+    wb_response_sync: process(clk)
     begin
-        wb_out.dat <= (others => '0');
-        wb_out.ack <= '0';
-        wb_out.stall <= '0';
-
-        -- Data vs register
-        if wb_map_valid = '1' or (ctrl_cs = '1' and wb_reg = SPI_REG_DATA) then
-            -- Data accesses, either manual or auto mode
-            if ctrl_cs = '1' then
-                wb_out.ack <= d_ack when cmd_valid = '1' else wb_valid;
-                wb_out.dat <= x"00" & d_rx & d_rx & d_rx;
+        if rising_edge(clk) then
+            if rst = '1' then
+                wb_out.ack   <= '0';
+                wb_out.stall <= '0';
             else
-                wb_out.ack <= auto_ack;
-                wb_out.dat <= auto_data;
+                -- Latch wb responses as well for 1 cycle. Stall is updated
+                -- below
+                wb_out <= wb_rsp;
+
+                -- Implement a stash buffer. If we are stalled and stash is
+                -- free, fill it up. This will generate a WB stall on the
+                -- next cycle.
+                if wb_rsp.stall = '1' and wb_out.stall = '0' and
+                    wb_in.cyc = '1' and wb_in.stb = '1' then
+                    wb_stash <= wb_in;
+                    wb_out.stall <= '1';
+                end if;
+
+                -- We aren't stalled, see what we can do
+                if wb_rsp.stall = '0' then
+                    if wb_out.stall = '1' then
+                        -- Something in stash ! use it and clear stash
+                        wb_req <= wb_stash;
+                        wb_out.stall <= '0';
+                    else
+                        -- Nothing in stash, grab request from WB
+                        if wb_in.cyc = '1' then
+                            wb_req <= wb_in;
+                        else
+                            wb_req.cyc <= wb_in.cyc;
+                            wb_req.stb <= wb_in.stb;
+                        end if;
+                    end if;
+                end if;
             end if;
-        else
+        end if;
+    end process;
+
+    wb_response_comb: process(all)
+    begin
+        -- Defaults
+        wb_rsp.ack <= '0';
+        wb_rsp.dat <= x"00" & d_rx & d_rx & d_rx;
+        wb_rsp.stall   <= '0';
+
+        -- Depending on the access type...
+        if wb_map_valid = '1' then
+
+            -- Memory map access
+            wb_rsp.stall <= not auto_ack;  -- XXX FIXME: Allow pipelining
+            wb_rsp.ack   <= auto_ack;
+            wb_rsp.dat   <= auto_data;
+
+        elsif ctrl_cs = '1' and wb_reg = SPI_REG_DATA then
+
+            -- Data register in manual mode
+            --
+            -- Stall stores if there's a pending read to avoid
+            -- acks colliding. Otherwise accept all accesses
+            -- immediately if rxtx is ready.
+            --
+            -- Note: This must match the logic setting cmd_valid
+            -- in wb_request_comb.
+            --
+            -- We also ack stores immediately when accepted. Loads
+            -- are handled separately further down.
+            --
+            if wb_req.we = '1' and  pending_read = '1' then
+                wb_rsp.stall <= '1';
+            else
+                wb_rsp.ack   <= wb_req.we and cmd_ready;
+                wb_rsp.stall <= not cmd_ready;
+            end if;
+
+            -- Note: loads acks are handled elsewhere
+        elsif wb_reg_valid = '1' then
+
             -- Normal register access
             --
-            -- Normally single cycle but ensure any auto-mode operation is
-            -- complete first
-            if auto_state = AUTO_IDLE then
-                wb_out.ack <= wb_valid;
+            -- Normally single cycle but ensure any auto-mode or manual
+            -- operation is complete first
+            --
+            if auto_state = AUTO_IDLE and bus_idle = '1' then
+                wb_rsp.ack   <= '1';
+                wb_rsp.stall <= '0';
+
                 case wb_reg is
                 when SPI_REG_CTRL =>
-                    wb_out.dat <= (ctrl_reg'range => ctrl_reg, others => '0');
+                    wb_rsp.dat <= (ctrl_reg'range => ctrl_reg, others => '0');
                 when SPI_REG_AUTO_CFG =>
-                    wb_out.dat <= (auto_cfg_reg'range => auto_cfg_reg, others => '0');
+                    wb_rsp.dat <= (auto_cfg_reg'range => auto_cfg_reg, others => '0');
                 when others => null;
                 end case;
+            else
+                wb_rsp.stall <= '1';
             end if;
         end if;
 
-        -- No pipelining
-        wb_out.stall <= '0' when wb_in.cyc = '0' else not wb_out.ack;
+        -- For loads in manual mode, we've accepted the command early
+        -- so none of the above connditions might be true. We thus need
+        -- to send the ack whenever we are getting it from rxtx.
+        --
+        -- This shouldn't collide with any of the above acks because we hold
+        -- normal register accesses and stores when there is a pending
+        -- load or the bus is busy.
+        --
+        if ctrl_cs = '1' and d_ack = '1' then
+            assert pending_read = '1' report "d_ack without pending read !" severity failure;
+            wb_rsp.ack <= '1';
+        end if;
     end process;
 
     -- Automatic mode state machine
@@ -255,7 +370,7 @@ begin
         auto_cs <= '0';
         auto_cmd_valid <= '0';
         auto_d_txd <= x"00";
-        auto_cmd_mode <= "000";
+        auto_cmd_mode <= "001";
         auto_d_clks <= "111";
         auto_latch_adr <= '0';
 
@@ -266,7 +381,7 @@ begin
 
         -- Convert wishbone address into a flash address. We mask
         -- off the 4 top address bits to get rid of the "f" there.
-        addr := "00" & wb_in.adr(29 downto 2) & "00";
+        addr := "00" & wb_req.adr(29 downto 2) & "00";
 
         -- Calculate the next address for store & compare later
         auto_lad_next <= std_ulogic_vector(unsigned(addr) + 4);
@@ -300,7 +415,7 @@ begin
                 -- Access to the memory map only when manual CS isn't set
                 if wb_map_valid = '1' and ctrl_cs = '0' then
                     -- Ignore writes, we don't support them yet
-                    if wb_in.we = '1' then
+                    if wb_req.we = '1' then
                         auto_ack <= '1';
                     else
                         -- Start machine with CS assertion delay
@@ -316,7 +431,7 @@ begin
             when AUTO_CMD =>
                 auto_d_txd <= auto_cfg_cmd;
                 auto_cmd_valid <= '1';
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     if auto_cfg_addr4 = '1' then
                         auto_next <= AUTO_ADR3;
                     else
@@ -326,25 +441,25 @@ begin
             when AUTO_ADR3 =>
                 auto_d_txd <= addr(31 downto 24);
                 auto_cmd_valid <= '1';
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     auto_next <= AUTO_ADR2;
                 end if;
             when AUTO_ADR2 =>
                 auto_d_txd <= addr(23 downto 16);
                 auto_cmd_valid <= '1';
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     auto_next <= AUTO_ADR1;
                 end if;
             when AUTO_ADR1 =>
                 auto_d_txd <= addr(15 downto 8);
                 auto_cmd_valid <= '1';
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     auto_next <= AUTO_ADR0;
                 end if;
             when AUTO_ADR0 =>
                 auto_d_txd <= addr(7 downto 0);
                 auto_cmd_valid <= '1';
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     if auto_cfg_dummies = "000" then
                         auto_next <= AUTO_DAT0;
                     else
@@ -354,13 +469,17 @@ begin
             when AUTO_DUMMY =>
                 auto_cmd_valid <= '1';
                 auto_d_clks <= auto_cfg_dummies;
-                if d_ack = '1' then
+                if cmd_ready = '1' then
                     auto_next <= AUTO_DAT0;
                 end if;
             when AUTO_DAT0 =>
                 auto_cmd_valid <= '1';
                 auto_cmd_mode <= auto_cfg_mode & "0";
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
+                if cmd_ready = '1' then
+                    auto_next <= AUTO_DAT0_DATA;
+                end if;
+            when AUTO_DAT0_DATA =>
                 if d_ack = '1' then
                     auto_data_next(7 downto 0) <= d_rx;
                     auto_next <= AUTO_DAT1;
@@ -369,6 +488,10 @@ begin
                 auto_cmd_valid <= '1';
                 auto_cmd_mode <= auto_cfg_mode & "0";
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
+                if cmd_ready = '1' then
+                    auto_next <= AUTO_DAT1_DATA;
+                end if;
+            when AUTO_DAT1_DATA =>
                 if d_ack = '1' then
                     auto_data_next(15 downto 8) <= d_rx;
                     auto_next <= AUTO_DAT2;
@@ -377,6 +500,10 @@ begin
                 auto_cmd_valid <= '1';
                 auto_cmd_mode <= auto_cfg_mode & "0";
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
+                if cmd_ready = '1' then
+                    auto_next <= AUTO_DAT2_DATA;
+                end if;
+            when AUTO_DAT2_DATA =>
                 if d_ack = '1' then
                     auto_data_next(23 downto 16) <= d_rx;
                     auto_next <= AUTO_DAT3;
@@ -385,6 +512,10 @@ begin
                 auto_cmd_valid <= '1';
                 auto_cmd_mode <= auto_cfg_mode & "0";
                 auto_d_clks <= mode_to_clks(auto_cfg_mode);
+                if cmd_ready = '1' then
+                    auto_next <= AUTO_DAT3_DATA;
+                end if;
+            when AUTO_DAT3_DATA =>
                 if d_ack = '1' then
                     auto_data_next(31 downto 24) <= d_rx;
                     auto_next <= AUTO_SEND_ACK;
@@ -397,7 +528,7 @@ begin
             when AUTO_WAIT_REQ =>
                 -- Incoming bus request we can take ? Otherwise do we need
                 -- to cancel the wait ?
-                if wb_map_valid = '1' and req_is_next and wb_in.we = '0' then
+                if wb_map_valid = '1' and req_is_next and wb_req.we = '0' then
                     auto_next <= AUTO_DAT0;
                 elsif wb_map_valid = '1' or wb_reg_valid = '1' or auto_cnt = 0 then
                     -- This means we can drop the CS right on the next clock.
@@ -456,12 +587,12 @@ begin
                 auto_cfg_cstout  <= std_ulogic_vector(to_unsigned(DEFAULT_CS_TIMEOUT, 6));
             end if;
 
-            if wb_reg_valid = '1' and wb_in.we = '1' and auto_state = AUTO_IDLE then
+            if wb_reg_valid = '1' and wb_req.we = '1' and auto_state = AUTO_IDLE and bus_idle = '1' then
                 if wb_reg = SPI_REG_CTRL then
-                    ctrl_reg     <= reg_wr(ctrl_reg, wb_in);
+                    ctrl_reg     <= reg_wr(ctrl_reg, wb_req);
                 end if;
                 if wb_reg = SPI_REG_AUTO_CFG then
-                    auto_cfg_reg <= reg_wr(auto_cfg_reg, wb_in);
+                    auto_cfg_reg <= reg_wr(auto_cfg_reg, wb_req);
                 end if;
             end if;
         end if;

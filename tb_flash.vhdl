@@ -282,6 +282,7 @@ begin
 
         -- Sending read ID command again
         report "Sending RDID again...";
+        wb_reg32_write(x"04", x"00000000");
         cs_set;
         cmd_write(x"9f");
         -- Random delay
@@ -375,34 +376,47 @@ begin
         assert dat = x"02" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA4=" & to_hstring(dat);
+        assert dat = x"f0" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA5=" & to_hstring(dat);
+        assert dat = x"0d" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA6=" & to_hstring(dat);
+        assert dat = x"03" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA7=" & to_hstring(dat);
+        assert dat = x"04" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA8=" & to_hstring(dat);
+        assert dat = x"ba" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATA9=" & to_hstring(dat);
+        assert dat = x"af" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATAa=" & to_hstring(dat);
+        assert dat = x"05" report "Unexpected result" severity failure;
         dat_read(dat);
         report "DATAb=" & to_hstring(dat);
+        assert dat = x"06" report "Unexpected result" severity failure;
         cs_clr;
 
         -- Try reading via memory map
         report "Reading map...";
         wb_map_read(x"000000", d32);
         report "DATA0=" & to_hstring(d32);
+        assert d32 = x"020155aa" report "Unexpected result" severity failure;
         wb_map_read(x"000000", d32);
         report "DATA0=" & to_hstring(d32);
+        assert d32 = x"020155aa" report "Unexpected result" severity failure;
         wb_map_read(x"000004", d32);
         report "DATA4=" & to_hstring(d32);
+        assert d32 = x"04030df0" report "Unexpected result" severity failure;
         wb_map_read(x"000004", d32);
         report "DATA4=" & to_hstring(d32);
+        assert d32 = x"04030df0" report "Unexpected result" severity failure;
         wb_map_read(x"000008", d32);
         report "DATA8=" & to_hstring(d32);
+        assert d32 = x"0605afba" report "Unexpected result" severity failure;
 
         -- Try reading via dual mode
         report "Sending DUAL FAST READ...";
@@ -506,28 +520,37 @@ begin
         report "Switching map to QUAD mode...";
         wb_reg32_write(x"08",
                        x"20" &          -- CS timeout
-                       x"01" &          -- clk div = 1 (CLK/4)
+                       x"00" &          -- clk div = 1 (CLK/4)
                        "00" &           -- reserved
                        "0" &            -- addr4 = 0
                        "11" &           -- mode = quad
                        "111" &          -- dummies = 7 (8 bits)
                        x"6b"            -- command = 6b (QUAD FAST READ)
                        );
+        wb_reg32_read(x"08", d32);
+        report("cfg=" & to_hstring(d32));
 
         -- Try reading via memory map
-        report "Reading map...";
+        report "Reading map fast..";
         wb_map_read(x"000000", d32);
         report "DATA0=" & to_hstring(d32);
+        assert d32 = x"020155aa" report "Unexpected result" severity failure;
         wb_map_read(x"000004", d32);
         report "DATA4=" & to_hstring(d32);
+        assert d32 = x"04030df0" report "Unexpected result" severity failure;
         wb_map_read(x"000008", d32);
         report "DATA8=" & to_hstring(d32);
-        wb_map_read(x"000004", d32);
+        assert d32 = x"0605afba" report "Unexpected result" severity failure;
+        wb_map_read(x"000000", d32);
         report "DATA0=" & to_hstring(d32);
-        wb_map_read(x"000008", d32);
+        assert d32 = x"020155aa" report "Unexpected result" severity failure;
+        wb_map_read(x"000004", d32);
         report "DATA4=" & to_hstring(d32);
+        assert d32 = x"04030df0" report "Unexpected result" severity failure;
 
-     wait for 1000 ns;
+        report "All tests completed ok.";
+
+        wait for 1000 ns;
         std.env.finish;
     end process;
 end;
