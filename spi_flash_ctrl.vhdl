@@ -176,7 +176,7 @@ begin
             -- in practice.
             --
             if cmd_valid = '1' and cmd_ready = '1' then
-                pending_read <= '1';
+                pending_read <= not wb_req.we;
             elsif bus_idle = '1' then
                 pending_read <= '0'; 
             end if;
